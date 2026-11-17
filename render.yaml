@@ -1,10 +1,34 @@
 services:
   - type: web
+    name: cinemind-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./web/backend/Dockerfile
+    dockerContext: ./web/backend
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: TMDB_READ_ACCESS_TOKEN
+        sync: false
+      - key: TMDB_SYNC_SECRET
+        sync: false
+  - type: web
     name: cinemind-web
     runtime: docker
     plan: free
     region: singapore
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./web/frontend/Dockerfile
+    dockerContext: ./web/frontend
     healthCheckPath: /healthz
     autoDeployTrigger: off

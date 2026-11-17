@@ -1,43 +1,34 @@
-# CineMind Web — React + Docker
+# CineMind — Đồ án 2
 
-Frontend React/Vite khởi đầu cho Đồ án 2. Phim, bài viết và tương tác Watchlist hiện là dữ liệu demo; chưa có backend, database, xác thực thật, TMDB hoặc Gemini. Không nhập dữ liệu cá nhân vào form demo.
+## Thư mục
 
-## Chạy local
+- `documents/` — báo cáo, đề cương, hình ảnh và hồ sơ yêu cầu cho AI.
+- `web/frontend/` — giao diện React + Vite.
+- `web/backend/` — API Node.js + Express, PostgreSQL migration.
+- `web/docker-compose.yml` — chạy frontend, API và PostgreSQL cùng nhau.
+- `render.yaml` — cấu hình triển khai web/API trên Render.
 
-Cần Node.js 20.19+ hoặc 22.12+ (khuyến nghị Node 24) và npm.
+## Chạy toàn bộ website local
 
-```bash
-npm install
-npm run dev
-```
-
-Mở địa chỉ Vite hiển thị, thường là `http://localhost:5173`. Build production: `npm run build`.
-
-## Docker
+Cài Docker Desktop, mở terminal tại thư mục `web`, sau đó chạy:
 
 ```bash
-docker build -t cinemind-web .
-docker run --rm -p 8080:10000 cinemind-web
+docker compose up --build
 ```
 
-Mở `http://localhost:8080`. Nginx phục vụ React SPA tại cổng 10000, hỗ trợ React Router và health check `/healthz`.
+Giao diện: `http://localhost:8080`  
+API: `http://localhost:3001/healthz`  
+Trạng thái database: `http://localhost:3001/api/health`
 
-## Render
+Database local dùng thông tin phát triển trong Compose. Không dùng mật khẩu này cho môi trường thật.
 
-`render.yaml` khai báo Docker Web Service ở Singapore và health check `/healthz`. `autoDeploy` tắt cho đến khi chủ dự án xác nhận branch/repository. Kết nối Git repository trong Render, chọn Blueprint từ file này, rà soát cấu hình rồi deploy. Render có thể build image trực tiếp từ Dockerfile trong repository; không bắt buộc đẩy image lên Docker Hub trước.
+## API nhanh
 
-## Cấu trúc
+- `GET http://localhost:3001/api/movies?q=batman`
+- `GET http://localhost:3001/api/tmdb/search?query=Interstellar`
+- `POST http://localhost:3001/api/auth/register` rồi `POST /api/auth/login`
+- `POST http://localhost:3001/api/ai/chat` với `{ "message": "..." }`
+- `POST http://localhost:3001/api/ai/recommendations` với Bearer JWT và `{ "mood": "..." }`
 
-- `src/App.jsx`: router và các trang giao diện khởi đầu.
-- `src/data/demo.js`: nội dung demo, cần thay bằng API.
-- `src/styles.css`: giao diện dark cinematic responsive.
-- `Dockerfile`, `nginx.conf`: build static và phục vụ SPA.
-- `render.yaml`: Blueprint cho Render.
+Xem `web/backend/README.md` để biết đầy đủ endpoint và cách nhập catalog phim. Khóa TMDB, Gemini, JWT và sync secret cần được điền trong `web/backend/.env` sau khi sao chép từ `web/backend/.env.example`.
 
-## Việc tiếp theo
-
-1. Chốt backend và PostgreSQL/MySQL theo `CineMind_AI_Build_Spec.md`.
-2. Tạo migration và REST API; thay dữ liệu mẫu bằng API.
-3. Hoàn tất auth/RBAC, Watchlist, review, blog, comments/likes.
-4. Tích hợp TMDB/Gemini ở backend, thêm kiểm thử và kiểm tra deploy.
-5. Xác nhận repository/branch trước khi bật auto-deploy.

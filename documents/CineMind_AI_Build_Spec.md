@@ -4,7 +4,7 @@
 >
 > **Sinh viên:** Tăng Thiện Thanh — MSSV 235985 — Công nghệ thông tin, Trường Đại học Nam Cần Thơ.  
 > **Cập nhật rà soát:** 17/11/2026.  
-> **Trạng thái hồ sơ:** có tài liệu giai đoạn 1–3 và mô hình dữ liệu giai đoạn 2; chưa có mã nguồn ứng dụng trong thư mục hồ sơ đã rà soát. Các lựa chọn nền tảng vẫn chưa được chốt.
+> **Trạng thái hồ sơ:** có tài liệu giai đoạn 1–3 và mô hình dữ liệu giai đoạn 2; đã có frontend React/Vite và backend khởi tạo Node.js/Express/PostgreSQL; các tích hợp thật cần API key được cấu hình riêng. Đã chốt: React/Vite cho frontend, Node.js + Express cho backend, PostgreSQL cho cơ sở dữ liệu; Docker để chạy/đóng gói và Render là đích triển khai dự kiến. Thông tin kết nối PostgreSQL production còn cần cấu hình khi triển khai.
 
 ---
 
@@ -383,3 +383,6 @@ Khi yêu cầu AI xây dựng website, đính kèm file này và giao một vi�
 > “Đọc `CineMind_AI_Build_Spec.md`, kiểm tra repository hiện tại và hiện thực giai đoạn đầu của MVP. Giữ nguyên công nghệ đã có. Nếu repository trống, đề xuất stack dựa trên các lựa chọn trong mục 12 trước khi scaffold. Báo cáo các điểm ở mục 10 cần quyết định, không tự coi chúng là yêu cầu đã chốt.”
 
 Khi yêu cầu sửa một chức năng cụ thể, nêu mã yêu cầu/mục tương ứng, ví dụ `Review`, `UC16`, hoặc `/admin/blogs`, để AI đối chiếu luồng, quyền và dữ liệu trước khi thay đổi.
+
+
+
