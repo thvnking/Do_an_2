@@ -1,0 +1,69 @@
+:root {
+  color-scheme: dark;
+
+  --color-bg-primary: #0b0b0d;
+  --color-bg-secondary: #131316;
+  --color-bg-card: #19191e;
+  --color-bg-elevated: #222228;
+  --color-text-primary: #f2f0ec;
+  --color-text-secondary: #a3a0a0;
+  --color-text-muted: #77747a;
+  --color-accent: #d4b779;
+  --color-accent-hover: #e1c991;
+  --color-border: #303036;
+  --color-success: #6fb28b;
+  --color-warning: #d9a85f;
+  --color-danger: #d56c6c;
+  --color-info: #7fa9c9;
+
+  --font-editorial: Georgia, 'Times New Roman', serif;
+  --font-interface: 'DM Sans', 'Segoe UI', Arial, sans-serif;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 40px;
+  --text-5xl: 48px;
+  --text-6xl: 64px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  --container-max: 1280px;
+  --container-wide: 1440px;
+  --container-reading: 740px;
+  --page-gutter: 16px;
+
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Legacy aliases keep the existing page styles stable during Phase 1. */
+  --bg: var(--color-bg-primary);
+  --panel: var(--color-bg-card);
+  --line: var(--color-border);
+  --muted: var(--color-text-secondary);
+  --accent: var(--color-accent);
+  --serif: var(--font-editorial);
+}

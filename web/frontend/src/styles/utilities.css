@@ -1,0 +1,47 @@
+.u-container {
+  width: min(var(--container-max), calc(100% - 2 * var(--page-gutter)));
+  margin-inline: auto;
+}
+
+.u-container-wide {
+  width: min(var(--container-wide), calc(100% - 2 * var(--page-gutter)));
+  margin-inline: auto;
+}
+
+.u-reading-width {
+  width: min(var(--container-reading), 100%);
+  margin-inline: auto;
+}
+
+.u-muted {
+  color: var(--color-text-muted);
+}
+
+.u-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --page-gutter: 24px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .u-container {
+    width: min(var(--container-wide), calc(100% - 2 * var(--page-gutter)));
+  }
+}
