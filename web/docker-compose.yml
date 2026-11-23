@@ -27,6 +27,9 @@ services:
         condition: service_healthy
   frontend:
     build: ./frontend
+    environment:
+      API_HOST: api
+      API_PORT: 10000
     ports: ["8080:10000"]
     depends_on: [api]
 volumes:

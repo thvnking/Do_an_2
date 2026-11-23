@@ -32,3 +32,15 @@ services:
     dockerContext: ./web/frontend
     healthCheckPath: /healthz
     autoDeployTrigger: off
+    envVars:
+      - key: API_HOST
+        fromService:
+          name: cinemind-api
+          type: web
+          property: host
+      - key: API_PORT
+        fromService:
+          name: cinemind-api
+          type: web
+          property: port
+

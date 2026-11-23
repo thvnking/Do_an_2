@@ -36,10 +36,8 @@ Mở `http://localhost:8080`. Nginx phục vụ React SPA tại cổng 10000, h�
 
 ## Việc tiếp theo
 
-1. Chốt backend và PostgreSQL/MySQL theo `../../documents/../../documents/CineMind_AI_Build_Spec.md`.
+1. Chốt backend và PostgreSQL/MySQL theo `CineMind_AI_Build_Spec.md`.
 2. Tạo migration và REST API; thay dữ liệu mẫu bằng API.
 3. Hoàn tất auth/RBAC, Watchlist, review, blog, comments/likes.
 4. Tích hợp TMDB/Gemini ở backend, thêm kiểm thử và kiểm tra deploy.
 5. Xác nhận repository/branch trước khi bật auto-deploy.
-
-

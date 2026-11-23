@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db/pool.js';
+import { requireAuth } from '../middleware/auth.js';
 
 export const moviesRouter = Router();
 moviesRouter.get('/', async (req, res, next) => {
@@ -41,4 +42,11 @@ moviesRouter.get('/:id', async (req, res, next) => {
     if (!result.rowCount) return res.status(404).json({ error: 'Movie not found' });
     res.json({ data: result.rows[0] });
   } catch (error) { next(error); }
+});
+
+moviesRouter.post('/:id/views', requireAuth, async (req,res,next) => {
+  try {
+    await pool.query('INSERT INTO movie_view_history(user_id,movie_id) SELECT $1,movie_id FROM movies WHERE movie_id=$2',[req.user.userId,req.params.id]);
+    res.status(204).end();
+  } catch(error){next(error);}
 });
