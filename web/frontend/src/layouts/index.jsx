@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import './layouts.css';
 
 const publicLinks = [
@@ -9,8 +9,14 @@ const publicLinks = [
   { to: '/ai', label: 'CineMind AI' },
 ];
 const adminLinks = [
+  { to: '/admin', label: 'Tổng quan', end: true },
+  { to: '/admin/users', label: 'Người dùng' },
+  { to: '/admin/movies', label: 'Phim' },
+  { to: '/admin/tmdb', label: 'Đồng bộ TMDB' },
+  { to: '/admin/blogs', label: 'Kiểm duyệt bài' },
+  { to: '/admin/reviews', label: 'Đánh giá' },
+  { to: '/admin/analytics', label: 'Thống kê' },
   { to: '/', label: 'Trang CineMind', end: true },
-  { to: '/admin', label: 'Bảng quản trị', end: true },
 ];
 
 function Brand() {
@@ -60,9 +66,17 @@ function MobileNavigation({ user, onLogout, onNavigate, variant }) {
 
 export function PublicHeader({ user, onLogout, variant = 'public' }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
   const navigationLinks = variant === 'admin' ? adminLinks : publicLinks;
   const toggleRef = useRef(null);
+  function searchMovies(event) {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) { navigate('/movies'); return; }
+    navigate(`/movies?q=${encodeURIComponent(query)}`);
+  }
   useEffect(() => setMenuOpen(false), [location.pathname, location.search]);
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -82,10 +96,10 @@ export function PublicHeader({ user, onLogout, variant = 'public' }) {
       {variant === 'admin' && <span className="cm-site-header__context">Không gian quản trị</span>}
       <nav className="cm-desktop-navigation" aria-label="Điều hướng chính">
         {navigationLinks.map(link => <NavLink key={link.to} to={link.to} end={link.end}>{link.label}</NavLink>)}
-        {variant !== 'admin' && <Link className="cm-search-link" to="/movies" aria-label="Tìm kiếm phim">
-          <svg aria-hidden="true" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg>
-          <span>Tìm phim</span>
-        </Link>}
+        {variant !== 'admin' && <form className="cm-header-search" role="search" onSubmit={searchMovies}>
+          <input type="search" aria-label="Tìm phim" placeholder="Tìm phim…" value={searchQuery} onChange={event => setSearchQuery(event.target.value)}/>
+          <button type="submit" aria-label="Tìm phim"><svg aria-hidden="true" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg></button>
+        </form>}
       </nav>
       <div className="cm-site-header__account"><UserMenu user={user} onLogout={onLogout} /></div>
       <button

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { api } from './api.js';
-import { EmptyState as Empty, ErrorState as ErrorBox, LoadingSpinner as Loading } from './components/index.js';
+import { Button, ErrorState as ErrorBox, LoadingSpinner as Loading } from './components/index.js';
 import { AdminLayout, AuthLayout, PublicLayout } from './layouts/index.jsx';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -9,26 +9,82 @@ import ExplorePage from './pages/ExplorePage.jsx';
 import MovieDetailPage from './pages/MovieDetailPage.jsx';
 import { BlogDetailPage, BlogEditorPage, BlogListPage } from './pages/BlogPages.jsx';
 import { PasswordChangePage, ProfilePage, WatchlistPage } from './pages/ProfilePages.jsx';
+import { AdminBlogsPage, AdminDashboardPage, AdminMoviesPage, AdminReviewsPage, AdminTmdbPage, AdminUsersPage } from './pages/AdminPages.jsx';
 
-function AI(){const [message,setMessage]=useState('');const [movieId,setMovieId]=useState('');const [movies,setMovies]=useState([]);const [messages,setMessages]=useState([]);const [busy,setBusy]=useState(false);const [error,setError]=useState(null);const [mood,setMood]=useState('');useEffect(()=>{api('/movies?limit=100').then(r=>setMovies(r.data)).catch(()=>{})},[]);
- async function send(e){e.preventDefault();const text=message.trim();if(!text)return;setMessages(x=>[...x,{role:'user',text}]);setMessage('');setBusy(true);setError(null);try{const r=await api('/ai/chat',{method:'POST',body:{message:text,...(movieId?{movieId:Number(movieId)}:{})}});setMessages(x=>[...x,{role:'assistant',text:r.answer}])}catch(e){setError(e)}finally{setBusy(false)}}
- async function recommend(){setBusy(true);setError(null);try{const r=await api('/ai/recommendations',{method:'POST',body:{mood}});setMessages(x=>[...x,{role:'assistant',text:r.answer}])}catch(e){setError(e)}finally{setBusy(false)}}
- return <main className="page ai-page"><div className="chat"><small className="eyebrow">CINEMIND AI · GEMINI</small><h1>Trò chuyện về điện ảnh</h1><p>Hỏi đáp phim ảnh hoặc nhận gợi ý từ danh mục CineMind.</p><label className="ai-movie">Hỏi theo phim (tùy chọn)<select value={movieId} onChange={e=>setMovieId(e.target.value)}><option value="">Chat tổng quát</option>{movies.map(m=><option key={m.movie_id} value={m.movie_id}>{m.title}</option>)}</select></label><div className="chat-history">{messages.map((m,i)=><div className={`chat-message ${m.role}`} key={i}><b>{m.role==='user'?'Bạn':'CineMind'}</b><p>{m.text}</p></div>)}{busy&&<div className="chat-message assistant">CineMind đang suy nghĩ…</div>}{!messages.length&&<div className="chips">{['Gợi ý phim nhẹ nhàng cuối tuần','Sci-fi giàu cảm xúc','Phim trinh thám hấp dẫn'].map(x=><button key={x} onClick={()=>setMessage(x)}>{x}</button>)}</div>}</div><ErrorBox error={error}/><form onSubmit={send}><input value={message} onChange={e=>setMessage(e.target.value)} placeholder="Hỏi CineMind về phim ảnh…"/><button disabled={busy||!message.trim()}>Gửi →</button></form><div className="recommend-row"><input value={mood} onChange={e=>setMood(e.target.value)} placeholder="Tâm trạng để nhận gợi ý cá nhân hóa…"/><button className="outline" disabled={busy} onClick={recommend}>Gợi ý cho tôi</button></div><small>Chat tổng quát dùng được không cần đăng nhập; gợi ý cá nhân hóa yêu cầu tài khoản.</small></div></main>;
+function AI() {
+  const [message, setMessage] = useState('');
+  const [movieId, setMovieId] = useState('');
+  const [movies, setMovies] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [mood, setMood] = useState('');
+  const [backdropFailed, setBackdropFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
+  useEffect(() => { let active = true; api('/movies?limit=100').then(result => { if (active) setMovies(result.data || []); }).catch(() => {}); return () => { active = false; }; }, []);
+
+  const selectedMovie = movies.find(movie => String(movie.movie_id) === String(movieId));
+  const backgroundImage = (!backdropFailed && selectedMovie?.banner_url) || (!posterFailed && selectedMovie?.poster_url);
+  useEffect(() => { setBackdropFailed(false); setPosterFailed(false); }, [selectedMovie?.movie_id]);
+
+  async function send(event) {
+    event.preventDefault();
+    const text = message.trim();
+    if (!text || busy) return;
+    setMessages(current => [...current, { role: 'user', text }]);
+    setMessage('');
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await api('/ai/chat', { method: 'POST', body: { message: text, ...(movieId ? { movieId: Number(movieId) } : {}) } });
+      setMessages(current => [...current, { role: 'assistant', text: result.answer }]);
+    } catch (reason) { setError(reason); }
+    finally { setBusy(false); }
+  }
+
+  async function recommend(event) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await api('/ai/recommendations', { method: 'POST', body: { mood } });
+      setMessages(current => [...current, { role: 'assistant', text: result.answer }]);
+    } catch (reason) { setError(reason); }
+    finally { setBusy(false); }
+  }
+
+  return <main className="cm-ai-page">
+    {backgroundImage && <img className="cm-ai-page__backdrop" src={backgroundImage} alt="" aria-hidden="true" onError={() => {
+      if (selectedMovie?.banner_url && backgroundImage === selectedMovie.banner_url) setBackdropFailed(true);
+      else setPosterFailed(true);
+    }}/>}
+    <div className="cm-ai-page__scrim" aria-hidden="true"/>
+    <section className="cm-ai-chat" aria-labelledby="cm-ai-title">
+      <header className="cm-ai-chat__header"><div><small className="eyebrow">CINEMIND AI · GEMINI</small><h1 id="cm-ai-title">Trò chuyện về điện ảnh</h1><p>{selectedMovie ? `Đang trò chuyện về ${selectedMovie.vietnamese_title || selectedMovie.title}.` : 'Khám phá những câu chuyện điện ảnh cùng CineMind.'}</p></div>
+        <label className="cm-ai-movie-select">Bối cảnh phim <select value={movieId} onChange={event => setMovieId(event.target.value)}><option value="">Chat tổng quát</option>{movies.map(movie => <option key={movie.movie_id} value={movie.movie_id}>{movie.vietnamese_title || movie.title}</option>)}</select></label>
+      </header>
+      <div className="cm-ai-chat__history" role="log" aria-label="Lịch sử trò chuyện" aria-live="polite">
+        {messages.map((item, index) => <article className={`cm-ai-message cm-ai-message--${item.role}`} key={`${item.role}-${index}`}><small>{item.role === 'user' ? 'Bạn' : 'CineMind'}</small><p>{item.text}</p></article>)}
+        {busy && <p className="cm-ai-thinking" role="status">CineMind đang suy nghĩ…</p>}
+        {!messages.length && <div className="cm-ai-welcome"><span aria-hidden="true">✦</span><h2>Một câu hỏi có thể mở ra cả thế giới.</h2><p>Hỏi về phim, nhân vật hoặc chọn phim phía trên để bắt đầu cuộc trò chuyện.</p><div className="cm-ai-prompts">{['Gợi ý phim nhẹ nhàng cuối tuần','Sci-fi giàu cảm xúc','Phim trinh thám hấp dẫn'].map(prompt => <button key={prompt} type="button" onClick={() => setMessage(prompt)}>{prompt}</button>)}</div></div>}
+      </div>
+      {error && <ErrorBox error={error}/>}
+      <form className="cm-ai-composer" onSubmit={send}><input aria-label="Tin nhắn cho CineMind" value={message} onChange={event => setMessage(event.target.value)} placeholder="Hỏi CineMind về phim ảnh…"/><Button type="submit" loading={busy} disabled={!message.trim()}>Gửi <span aria-hidden="true">↑</span></Button></form>
+      <form className="cm-ai-recommend" onSubmit={recommend}><label htmlFor="cm-ai-mood">Gợi ý theo tâm trạng</label><input id="cm-ai-mood" value={mood} onChange={event => setMood(event.target.value)} placeholder="Ví dụ: muốn xem điều gì nhẹ nhàng…"/><Button type="submit" variant="ghost" disabled={busy}>Gợi ý phim</Button></form>
+      <small className="cm-ai-disclaimer">Chat tổng quát dùng được không cần đăng nhập. Gợi ý cá nhân hóa yêu cầu tài khoản.</small>
+    </section>
+  </main>;
 }
 
 function AuthPage({register=false}){const {user,authenticate}=useAuth();const nav=useNavigate();const [form,setForm]=useState({});const [error,setError]=useState(null);const [busy,setBusy]=useState(false);if(user)return <main className="auth"><h1>Bạn đã đăng nhập</h1><Link to="/profile">Vào hồ sơ →</Link></main>;async function submit(e){e.preventDefault();setBusy(true);try{const u=await authenticate(register?'/auth/register':'/auth/login',register?{username:form.username,email:form.email,password:form.password,fullName:form.fullName}:{identity:form.identity,password:form.password});nav(u.role==='ADMIN'?'/admin':'/profile')}catch(e){setError(e)}finally{setBusy(false)}}
  return <main className="auth"><small className="eyebrow">CINEMIND COMMUNITY</small><h1>{register?'Tạo tài khoản':'Đăng nhập'}</h1><p>{register?'Tham gia cộng đồng yêu điện ảnh.':'Chào mừng bạn quay lại CineMind.'}</p><ErrorBox error={error}/><form onSubmit={submit}>{register&&<><label>Tên người dùng<input required minLength={3} maxLength={50} value={form.username||''} onChange={e=>setForm({...form,username:e.target.value})}/></label><label>Họ tên<input maxLength={150} value={form.fullName||''} onChange={e=>setForm({...form,fullName:e.target.value})}/></label><label>Email<input type="email" required value={form.email||''} onChange={e=>setForm({...form,email:e.target.value})}/></label></>} {!register&&<label>Email hoặc tên người dùng<input required value={form.identity||''} onChange={e=>setForm({...form,identity:e.target.value})}/></label>}<label>Mật khẩu<input type="password" required minLength={8} value={form.password||''} onChange={e=>setForm({...form,password:e.target.value})}/></label><button className="primary" disabled={busy}>{busy?'Đang xử lý…':register?'Tạo tài khoản →':'Đăng nhập →'}</button></form><p>{register?'Đã có tài khoản? ':'Chưa có tài khoản? '}<Link to={register?'/login':'/register'}>{register?'Đăng nhập':'Đăng ký'}</Link></p></main>;
 }
 
-function MovieAdminPanel({movies,reload}){const [title,setTitle]=useState('');const [releaseYear,setYear]=useState('');const [synopsis,setSynopsis]=useState('');const [error,setError]=useState(null);async function add(e){e.preventDefault();try{await api('/admin/movies',{method:'POST',body:{title,releaseYear:releaseYear?Number(releaseYear):undefined,synopsis}});setTitle('');setYear('');setSynopsis('');setError(null);reload()}catch(e){setError(e)}}async function edit(movie){const next=window.prompt('Tiêu đề phim',movie.title);if(!next||next===movie.title)return;try{await api(`/admin/movies/${movie.movie_id}`,{method:'PATCH',body:{title:next}});reload()}catch(e){setError(e)}}async function remove(movie){if(!window.confirm(`Xóa phim “${movie.title}”?`))return;try{await api(`/admin/movies/${movie.movie_id}`,{method:'DELETE'});reload()}catch(e){setError(e)}}return <><ErrorBox error={error}/><form className="row-actions movie-admin-form" onSubmit={add}><input required maxLength={255} placeholder="Tên phim thêm thủ công" value={title} onChange={e=>setTitle(e.target.value)}/><input inputMode="numeric" placeholder="Năm" value={releaseYear} onChange={e=>setYear(e.target.value.replace(/\D/g,'').slice(0,4))}/><input placeholder="Tóm tắt ngắn" value={synopsis} onChange={e=>setSynopsis(e.target.value)}/><button className="primary">Thêm phim</button></form>{movies.map(m=><div className="admin-row" key={m.movie_id}><Link to={`/movies/${m.movie_id}`}>{m.title}</Link><span>{m.release_year} · TMDB {m.tmdb_id||'—'}</span><div className="row-actions"><button className="text-button" onClick={()=>edit(m)}>Sửa tên</button><button className="text-button" onClick={()=>remove(m)}>Xóa</button></div></div>)}</>}
-
-function Admin(){const [summary,setSummary]=useState(null);const [queue,setQueue]=useState([]);const [users,setUsers]=useState([]);const [movies,setMovies]=useState([]);const [tab,setTab]=useState('overview');const [error,setError]=useState(null);const [notice,setNotice]=useState('');const [pages,setPages]=useState(1);const load=()=>Promise.all([api('/admin/summary'),api('/blogs/admin/queue?status=PENDING'),api('/admin/users'),api('/movies?limit=100')]).then(([s,b,u,m])=>{setSummary(s.data);setQueue(b.data);setUsers(u.data);setMovies(m.data)}).catch(setError);useEffect(()=>{load()},[]);
- async function moderate(id,action){try{await api(`/blogs/admin/${id}/moderation`,{method:'PATCH',body:{action}});setNotice('Đã cập nhật trạng thái bài viết');load()}catch(e){setError(e)}}async function setRole(id,role){try{await api(`/admin/users/${id}/role`,{method:'PATCH',body:{role}});load()}catch(e){setError(e)}}async function sync(){try{setNotice('Đang nhập phim từ TMDB…');const r=await api('/admin/sync-tmdb',{method:'POST',body:{pages:Number(pages)}});setNotice(`Đã nhập ${r.imported} phim`);load()}catch(e){setError(e);setNotice('')}}
- return <main className="page"><div className="page-title"><small className="eyebrow">CINEMIND ADMIN</small><h1>Quản trị hệ thống</h1></div><div className="admin-tabs">{[['overview','Tổng quan'],['blogs','Duyệt bài'],['users','Người dùng'],['movies','Phim']].map(([k,v])=><button className={tab===k?'active':''} key={k} onClick={()=>setTab(k)}>{v}</button>)}</div><ErrorBox error={error}/>{notice&&<div className="success-box">{notice}</div>}{tab==='overview'&&summary&&<div className="stats-grid">{Object.entries({Tài_khoản:summary.users,Phim:summary.movies,Bài_chờ_duyệt:summary.pending_posts,Bài_đã_xuất_bản:summary.published_posts,Đánh_giá:summary.reviews,Bình_luận:summary.comments}).map(([k,v])=><div className="stat-card" key={k}><small>{k.replaceAll('_',' ')}</small><b>{v}</b></div>)}</div>}{tab==='blogs'&&<div>{queue.length?queue.map(b=><article className="admin-card" key={b.post_id}><small>{b.author} · {new Date(b.created_at).toLocaleDateString('vi-VN')}</small><h3>{b.title}</h3><p>{b.content.slice(0,500)}</p><div className="row-actions"><button className="primary" onClick={()=>moderate(b.post_id,'approve')}>Duyệt</button><button className="outline" onClick={()=>moderate(b.post_id,'reject')}>Từ chối</button></div></article>):<Empty>Không có bài viết chờ duyệt.</Empty>}</div>}{tab==='users'&&users.map(u=><div className="admin-row" key={u.user_id}><span>{u.username} · {u.email}</span><select value={u.role} onChange={e=>setRole(u.user_id,e.target.value)}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></div>)}{tab==='movies'&&<><div className="row-actions"><label>Số trang TMDB (tối đa 5)<input type="number" min="1" max="5" value={pages} onChange={e=>setPages(e.target.value)}/></label><button className="primary" onClick={sync}>Đồng bộ phim phổ biến</button></div><MovieAdminPanel movies={movies} reload={load}/></>}</main>;
-}
 
 function NotFound(){return <main className="auth"><h1>Không tìm thấy trang</h1><Link to="/">Về trang chủ →</Link></main>}
-function AppRoutes(){const {user,ready,logout}=useAuth();const location=useLocation();if(!ready)return <Loading/>;const Layout=location.pathname==='/admin'?AdminLayout:location.pathname==='/login'||location.pathname==='/register'?AuthLayout:PublicLayout;return <Layout user={user} onLogout={logout}><Routes><Route path="/" element={<HomePage/>}/><Route path="/movies" element={<ExplorePage/>}/><Route path="/movies/:id" element={<MovieDetailPage/>}/><Route path="/blogs" element={<BlogListPage/>}/><Route path="/blogs/new" element={<BlogEditorPage/>}/><Route path="/blogs/:id" element={<BlogDetailPage/>}/><Route path="/ai" element={<AI/>}/><Route path="/login" element={<AuthPage/>}/><Route path="/register" element={<AuthPage register/>}/><Route path="/profile" element={<ProfilePage/>}/><Route path="/profile/password" element={<PasswordChangePage/>}/><Route path="/watchlist" element={<WatchlistPage/>}/><Route path="/admin" element={<Admin/>}/><Route path="*" element={<NotFound/>}/></Routes></Layout>}
+function AdminAccess(){const {user}=useAuth();const location=useLocation();if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(user.role!=='ADMIN')return <main className="page cm-admin-access"><h1>Không có quyền truy cập</h1><p>Khu vực này chỉ dành cho Admin.</p><Link to="/">Về CineMind →</Link></main>;return <Outlet/>;}
+function AppRoutes(){const {user,ready,logout}=useAuth();const location=useLocation();if(!ready)return <Loading/>;const isAdminRoute=location.pathname.startsWith('/admin');const Layout=isAdminRoute&&user?.role==='ADMIN'?AdminLayout:location.pathname==='/login'||location.pathname==='/register'?AuthLayout:PublicLayout;return <Layout user={user} onLogout={logout}><Routes><Route path="/" element={<HomePage/>}/><Route path="/movies" element={<ExplorePage/>}/><Route path="/movies/:id" element={<MovieDetailPage/>}/><Route path="/blogs" element={<BlogListPage/>}/><Route path="/blogs/new" element={<BlogEditorPage/>}/><Route path="/blogs/:id" element={<BlogDetailPage/>}/><Route path="/ai" element={<AI/>}/><Route path="/login" element={<AuthPage/>}/><Route path="/register" element={<AuthPage register/>}/><Route path="/profile" element={<ProfilePage/>}/><Route path="/profile/password" element={<PasswordChangePage/>}/><Route path="/watchlist" element={<WatchlistPage/>}/><Route path="/admin" element={<AdminAccess/>}><Route index element={<AdminDashboardPage/>}/><Route path="users" element={<AdminUsersPage/>}/><Route path="movies" element={<AdminMoviesPage/>}/><Route path="tmdb" element={<AdminTmdbPage/>}/><Route path="blogs" element={<AdminBlogsPage/>}/><Route path="reviews" element={<AdminReviewsPage/>}/><Route path="analytics" element={<AdminDashboardPage analytics/>}/></Route><Route path="*" element={<NotFound/>}/></Routes></Layout>}
 export default function App(){return <AuthProvider><AppRoutes/></AuthProvider>}
 
 

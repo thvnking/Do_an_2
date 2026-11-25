@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { BlogCard, Button, CommentThread, EmptyState, ErrorState, Input, LikeButton, LoadingSpinner, Pagination, Select, Textarea } from '../components/index.js';
+import { BlogCard, Button, CommentThread, EmptyState, ErrorState, HorizontalCarousel, Input, LikeButton, LoadingSpinner, Pagination, Select, Textarea } from '../components/index.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import './pages.css';
 
@@ -24,10 +24,27 @@ export function BlogListPage() {
     return () => { active = false; };
   }, [page, reloadToken]);
 
+  const editorialGroups = [];
+  const groupLookup = new Map();
+  for (const post of posts) {
+    const movieTitle = typeof post.movie_title === 'string' ? post.movie_title.trim() : '';
+    const key = movieTitle ? `movie:${movieTitle.toLocaleLowerCase('vi-VN')}` : 'general';
+    let group = groupLookup.get(key);
+    if (!group) {
+      group = { key, title: movieTitle || 'Câu chuyện điện ảnh', movie: Boolean(movieTitle), posts: [] };
+      groupLookup.set(key, group);
+      editorialGroups.push(group);
+    }
+    group.posts.push(post);
+  }
+
   return <main className="page cm-blog-list-page">
     <div className="page-title"><small className="eyebrow">TẠP CHÍ CINEMIND</small><h1>Điện ảnh là để<br/><em>cùng nhau kể.</em></h1><p>Bài viết, phân tích và cảm nhận từ cộng đồng yêu phim.</p>{user && <Link className="primary" to="/blogs/new">Viết bài mới</Link>}</div>
     <ErrorState error={error} onRetry={() => setReloadToken(value => value + 1)}/>
-    {loading ? <LoadingSpinner label="Đang tải bài viết…"/> : posts.length ? <div className="post-grid cm-blog-list-page__grid">{posts.map(post => <BlogCard key={post.post_id} post={post}/>)}</div> : !error && <EmptyState title="Chưa có bài viết đã xuất bản">Các bài được duyệt sẽ xuất hiện tại đây.</EmptyState>}
+    {loading ? <LoadingSpinner label="Đang tải bài viết…"/> : editorialGroups.length ? <div className="cm-blog-editorial-groups">{editorialGroups.map(group => <section className="cm-blog-editorial-section" key={group.key}>
+      <header className="cm-blog-editorial-section__heading"><div><small className="eyebrow">{group.movie ? 'CHỦ ĐỀ PHIM' : 'CINEMIND STORIES'}</small><h2>{group.title}</h2></div><span>{group.posts.length} bài viết</span></header>
+      <HorizontalCarousel label={`bài viết ${group.movie ? `về ${group.title}` : 'chủ đề điện ảnh'}`}><div className="cm-blog-editorial-track">{group.posts.map(post => <BlogCard key={post.post_id} post={post}/>)}</div></HorizontalCarousel>
+    </section>)}</div> : !error && <EmptyState title="Chưa có bài viết đã xuất bản">Các bài được duyệt sẽ xuất hiện tại đây.</EmptyState>}
     {!loading && !error && <Pagination page={page} hasPrevious={page > 1} hasNext={posts.length === 12} onPageChange={nextPage => { const next = new URLSearchParams(searchParams); if (nextPage > 1) next.set('page', String(nextPage)); else next.delete('page'); setSearchParams(next); }}/>}
   </main>;
 }

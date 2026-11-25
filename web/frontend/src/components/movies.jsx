@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/index.jsx';
 
@@ -15,6 +15,7 @@ export function MoviePoster({ src, alt, title, fallback, className = '', loading
 
 export function MovieBackdrop({ src, alt = '', title, children, className = '' }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
   return <section className={`cm-movie-backdrop ${className}`}>
     {src && !failed && <img className="cm-movie-backdrop__preload" src={src} alt={alt} onError={() => setFailed(true)}/>}
     {title && <div className="cm-movie-backdrop__content"><h2>{title}</h2>{children}</div>}{!title && children}
@@ -61,5 +62,42 @@ export function MovieGrid({ movies, children, className = '', columns = 'auto', 
   const savedSet = savedIds instanceof Set ? savedIds : new Set(savedIds || []);
   return <div className={`movie-grid cm-movie-grid ${className}`} data-columns={columns} {...props}>
     {children ?? movies?.map(movie => <MovieCard key={movie.movie_id} movie={movie} saved={savedSet.has(movie.movie_id)} onToggle={onToggle}/>) }
+  </div>;
+}
+
+export function HorizontalCarousel({ label, children, className = '' }) {
+  const viewportRef = useRef(null);
+  const [edges, setEdges] = useState({ start: true, end: false });
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return undefined;
+    const updateEdges = () => {
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      setEdges({ start: viewport.scrollLeft <= 2, end: maxScroll <= 2 || viewport.scrollLeft >= maxScroll - 2 });
+    };
+    updateEdges();
+    viewport.addEventListener('scroll', updateEdges, { passive: true });
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(updateEdges) : null;
+    observer?.observe(viewport);
+    if (viewport.firstElementChild) observer?.observe(viewport.firstElementChild);
+    return () => { viewport.removeEventListener('scroll', updateEdges); observer?.disconnect(); };
+  }, [children]);
+
+  function move(direction) {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    viewport.scrollBy({ left: direction * Math.max(240, viewport.clientWidth * 0.82), behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
+
+  return <div className={`cm-horizontal-carousel ${className}`}>
+    <div className="cm-horizontal-carousel__controls" aria-label={`Điều hướng ${label}`}>
+      <Button variant="outline" size="sm" disabled={edges.start} onClick={() => move(-1)} aria-label={`Cuộn ${label} sang trái`}>←</Button>
+      <Button variant="outline" size="sm" disabled={edges.end} onClick={() => move(1)} aria-label={`Cuộn ${label} sang phải`}>→</Button>
+    </div>
+    <div ref={viewportRef} className="cm-horizontal-carousel__viewport" role="region" aria-label={label} aria-roledescription="carousel" tabIndex={0}>
+      {children}
+    </div>
   </div>;
 }
