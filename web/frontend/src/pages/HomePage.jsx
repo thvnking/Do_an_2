@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import { BlogCard, Button, EmptyState, ErrorState, HorizontalCarousel, LoadingSpinner, MovieBackdrop, MovieGrid, MovieMetadata, MoviePoster } from '../components/index.js';
+import { BlogCard, Button, EmptyState, ErrorState, HorizontalCarousel, LoadingSpinner, MovieBackdrop, MovieGrid, MovieMetadata } from '../components/index.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import './pages.css';
 
@@ -126,8 +126,14 @@ export default function HomePage() {
     <MovieBackdrop key={featured?.movie_id || 'empty-hero'} src={featured?.banner_url || featured?.poster_url} title={null} alt={featured ? `Ảnh nền ${featured.title}` : ''} className="cm-home-hero">
       <div className="cm-home-hero__content" onPointerEnter={event => { if (!event.target.closest('button, a')) setHeroPaused(true); }}>
         <small className="eyebrow">CINEMIND · CỘNG ĐỒNG ĐIỆN ẢNH</small>
-        <div className={`cm-home-hero__panel${trailerEmbedUrl && !trailerFailed ? ' has-trailer' : ''}`} key={featured?.movie_id || 'empty-hero'}>
-          {featured && <MoviePoster src={featured.poster_url} fallback={featured.vietnamese_title || featured.title} alt={`Poster ${featured.title}`} className="cm-home-hero__poster"/>}
+        <div className="cm-home-hero__panel" key={featured?.movie_id || 'empty-hero'}>
+          <div className="cm-home-hero__video">
+            {trailerEmbedUrl && !trailerFailed
+              ? <iframe key={featured?.movie_id} src={trailerEmbedUrl} title={`Trailer ${featured?.vietnamese_title || featured?.title || 'phim nổi bật'}`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen loading="eager" onError={() => setTrailerFailed(true)}/>
+              : featured?.banner_url || featured?.poster_url
+                ? <img src={featured.banner_url || featured.poster_url} alt={`Ảnh phim ${featured.vietnamese_title || featured.title}`} />
+                : <span>Trailer chưa khả dụng</span>}
+          </div>
           <div className="cm-home-hero__copy">
             <small className="cm-home-hero__kicker">{featured ? 'PHIM NỔI BẬT' : 'CỘNG ĐỒNG ĐIỆN ẢNH'}</small>
             <h1>{featured ? (featured.vietnamese_title || featured.title) : 'Mỗi bộ phim mở ra một thế giới.'}</h1>
@@ -141,7 +147,6 @@ export default function HomePage() {
               <Link className="plain" to="/ai">Hỏi CineMind AI →</Link>
             </div>
           </div>
-          {trailerEmbedUrl && !trailerFailed && <div className="cm-home-hero__video"><iframe key={featured?.movie_id} src={trailerEmbedUrl} title={`Trailer ${featured?.vietnamese_title || featured?.title || 'phim nổi bật'}`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen loading="eager" onError={() => setTrailerFailed(true)}/></div>}
           {heroMovies.length > 1 && <div className="cm-home-hero__controls" aria-label="Chọn phim nổi bật">
             <Button variant="outline" size="sm" onClick={() => chooseHero(featuredIndex - 1)} aria-label="Phim nổi bật trước">←</Button>
             {heroMovies.map((movie, index) => <button key={movie.movie_id} className="cm-home-hero__indicator" type="button" aria-label={`Chọn phim ${movie.vietnamese_title || movie.title}`} aria-pressed={index === featuredIndex} onClick={() => chooseHero(index)}><span/></button>)}
